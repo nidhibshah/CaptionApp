@@ -11,7 +11,7 @@ from torchvision.models import vit_b_16
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from gtts import gTTS
 
-st.set_page_config(page_title="Image Captioning for visually imparied", page_icon="🖼️", layout="centered")
+st.set_page_config(page_title="Image Captioning for visually imparied",  layout="centered")
 
 MODEL_DIR = "saved_ViT-SLSTM_models"
 ZIP_FILE = "saved_ViT-SLSTM_models.zip"
