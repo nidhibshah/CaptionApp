@@ -86,18 +86,97 @@ class ViTFeatureExtractor(nn.Module):
         return x[:,0]
 
 class SeparableCNNLSTM(nn.Module):
-    def __init__(self,e=512,h=512):
+
+    def __init__(self, embed_dim=512, hidden_dim=512):
         super().__init__()
-        self.dw=nn.Conv1d(e,e,3,padding=1,groups=e)
-        self.pw=nn.Conv1d(e,e,1)
-        self.relu=nn.ReLU()
-        self.lstm=nn.LSTM(e,h,batch_first=True)
-    def forward(self,x):
-        x=x.permute(0,2,1)
-        x=self.relu(self.pw(self.dw(x)))
-        x=x.permute(0,2,1)
-        _,(h,_) = self.lstm(x)
-        return h[-1]
+
+        self.depthwise = nn.Conv1d(
+            embed_dim,
+            embed_dim,
+            kernel_size=3,
+            padding=1,
+            groups=embed_dim
+        )
+
+        self.pointwise = nn.Conv1d(
+            embed_dim,
+            embed_dim,
+            kernel_size=1
+        )
+
+        self.relu = nn.ReLU()
+
+        self.lstm = nn.LSTM(
+            embed_dim,
+            hidden_dim,
+            batch_first=True
+        )
+
+    def forward(self, x):
+
+        x = x.permute(0,2,1)
+
+        x = self.depthwise(x)
+
+        x = self.pointwise(x)
+
+        x = self.relu(x)
+
+        x = x.permute(0,2,1)
+
+        _, (hidden, _) = self.lstm(x)
+
+        return hidden[-1]
+
+
+class CaptionModel(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+        self.image_fc = nn.Sequential(
+            nn.Linear(768,512),
+            nn.ReLU(),
+            nn.Dropout(0.4)
+        )
+
+        self.embedding = nn.Embedding(
+            vocab_size,
+            512
+        )
+
+        self.sep_cnn_lstm = SeparableCNNLSTM()
+
+        self.fc1 = nn.Linear(512,512)
+
+        self.relu = nn.ReLU()
+
+        self.dropout = nn.Dropout(0.4)
+
+        self.fc2 = nn.Linear(
+            512,
+            vocab_size
+        )
+
+    def forward(self, image, seq):
+
+        img = self.image_fc(image)
+
+        emb = self.embedding(seq)
+
+        text = self.sep_cnn_lstm(emb)
+
+        x = img + text
+
+        x = self.fc1(x)
+
+        x = self.relu(x)
+
+        x = self.dropout(x)
+
+        x = self.fc2(x)
+
+        return x
 
 config=torch.load(f"{MODEL_DIR}/config.pth",weights_only=False)
 max_len=config["max_len"]
@@ -105,22 +184,6 @@ vocab_size=config["vocab_size"]
 tokenizer=torch.load(f"{MODEL_DIR}/tokenizer.pth",weights_only=False)
 index_word=tokenizer.index_word
 
-class CaptionModel(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.image_fc=nn.Sequential(nn.Linear(768,512),nn.ReLU(),nn.Dropout(.4))
-        self.embedding=nn.Embedding(vocab_size,512)
-        self.sep=SeparableCNNLSTM()
-        self.fc1=nn.Linear(512,512)
-        self.relu=nn.ReLU()
-        self.drop=nn.Dropout(.4)
-        self.fc2=nn.Linear(512,vocab_size)
-    def forward(self,image,seq):
-        img=self.image_fc(image)
-        txt=self.sep(self.embedding(seq))
-        x=img+txt
-        x=self.drop(self.relu(self.fc1(x)))
-        return self.fc2(x)
 
 @st.cache_resource
 def load_models():
