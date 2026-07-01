@@ -24,49 +24,63 @@ REQUIRED_FILES = [
     "vit_feature_extractor.pth",
 ]
 
+
 def models_exist():
+    """Check whether all required model files exist."""
     return all(
-        os.path.exists(os.path.join(MODEL_DIR, f))
-        for f in REQUIRED_FILES
+        os.path.isfile(os.path.join(MODEL_DIR, file))
+        for file in REQUIRED_FILES
     )
 
+
 def download_models():
+    """Download and extract pretrained models if not already available."""
 
     if models_exist():
-        st.success("✅ Models found.")
+        st.success("✅ Pretrained models already exist.")
         return
 
-    st.info("Downloading pretrained models...")
+    st.info("📥 Downloading pretrained models...")
 
+    # Direct Google Drive download URL
     url = f"https://drive.google.com/uc?id={FILE_ID}"
 
     try:
-
+        # Download ZIP file
         gdown.download(
             url=url,
             output=ZIP_FILE,
-            quiet=False,
-            fuzzy=True
+            quiet=False
         )
 
+        # Verify download
         if not os.path.exists(ZIP_FILE):
-            st.error("Download failed.")
+            st.error("❌ Download failed. ZIP file not found.")
             st.stop()
 
+        st.info("📦 Extracting model files...")
+
+        # Extract ZIP
         with zipfile.ZipFile(ZIP_FILE, "r") as zip_ref:
             zip_ref.extractall(".")
 
-        if os.path.exists(ZIP_FILE):
-            os.remove(ZIP_FILE)
+        # Remove ZIP after extraction
+        os.remove(ZIP_FILE)
 
-        st.success("Models downloaded successfully.")
+        # Verify required files
+        if models_exist():
+            st.success("✅ Models downloaded and extracted successfully.")
+        else:
+            st.error("❌ Some required model files are missing after extraction.")
+            st.stop()
 
     except Exception as e:
-        st.error(f"Download failed: {e}")
+        st.error(f"❌ Download failed: {e}")
         st.stop()
 
-download_models()
 
+# Download models when app starts
+download_models()
 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
 transform=transforms.Compose([
     transforms.Resize((224,224)),
