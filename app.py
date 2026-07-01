@@ -15,7 +15,8 @@ st.set_page_config(page_title="Image Captioning for visually imparied",  layout=
 
 MODEL_DIR = "saved_ViT-SLSTM_models"
 ZIP_FILE = "saved_ViT-SLSTM_models.zip"
-FILE_ID = "1rEXAKAZiHtvYYPRChiVmdDV4wDYFbLc3"
+#FILE_ID = "1rEXAKAZiHtvYYPRChiVmdDV4wDYFbLc3"
+FILE_ID = "1w6YX9P3NLOxj4FLHcJMegPZ3DiiUUgr3"
 
 REQUIRED_FILES = [
     "config.pth",
