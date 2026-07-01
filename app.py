@@ -13,23 +13,57 @@ from gtts import gTTS
 
 st.set_page_config(page_title="Image Captioning", page_icon="🖼️", layout="centered")
 
-MODEL_DIR="saved_ViT-SLSTM_models"
-ZIP_FILE="saved_ViT-SLSTM_models.zip"
-FILE_ID="1rEXAKAZiHtvYYPRChiVmdDV4wDYFbLc3"
-REQ=["config.pth","caption_model.pth","tokenizer.pth","vit_feature_extractor.pth"]
+MODEL_DIR = "saved_ViT-SLSTM_models"
+ZIP_FILE = "saved_ViT-SLSTM_models.zip"
+FILE_ID = "1rEXAKAZiHtvYYPRChiVmdDV4wDYFbLc3"
+
+REQUIRED_FILES = [
+    "config.pth",
+    "caption_model.pth",
+    "tokenizer.pth",
+    "vit_feature_extractor.pth",
+]
 
 def models_exist():
-    return all(os.path.exists(os.path.join(MODEL_DIR,f)) for f in REQ)
+    return all(
+        os.path.exists(os.path.join(MODEL_DIR, f))
+        for f in REQUIRED_FILES
+    )
 
 def download_models():
+
     if models_exist():
+        st.success("✅ Models found.")
         return
-    url=f"https://drive.google.com/uc?id={FILE_ID}"
-    with st.spinner("Downloading pretrained models..."):
-        gdown.download(url, ZIP_FILE, quiet=False)
-        with zipfile.ZipFile(ZIP_FILE,"r") as z:
-            z.extractall(".")
-        os.remove(ZIP_FILE)
+
+    st.info("Downloading pretrained models...")
+
+    url = f"https://drive.google.com/uc?id={FILE_ID}"
+
+    try:
+
+        gdown.download(
+            url=url,
+            output=ZIP_FILE,
+            quiet=False,
+            fuzzy=True
+        )
+
+        if not os.path.exists(ZIP_FILE):
+            st.error("Download failed.")
+            st.stop()
+
+        with zipfile.ZipFile(ZIP_FILE, "r") as zip_ref:
+            zip_ref.extractall(".")
+
+        if os.path.exists(ZIP_FILE):
+            os.remove(ZIP_FILE)
+
+        st.success("Models downloaded successfully.")
+
+    except Exception as e:
+        st.error(f"Download failed: {e}")
+        st.stop()
 
 download_models()
 
