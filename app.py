@@ -231,7 +231,7 @@ def predict(image):
         text+=" "+w
     return " ".join(words)
 
-st.title("🖼️ Image Caption Generator for visually impaired")
+st.title(" Image Caption Generator for visually impaired")
 st.write("Upload an image to generate a caption and speech.")
 
 uploaded=st.file_uploader("Choose an image",type=["jpg","jpeg","png"])
